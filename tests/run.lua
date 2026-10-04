@@ -332,7 +332,7 @@ local function run()
     vim.cmd("2WalkerTask review #grammar Improve grammar")
     eq(doc.snapshot(task(), current(), "").target, { "second" })
     local before = current()
-    vim.cmd("1,8WalkerTask plan nested")
+    vim.cmd("1," .. #current() .. "WalkerTask plan nested")
     eq(current(), before)
   end)
 

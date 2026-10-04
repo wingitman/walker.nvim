@@ -15,6 +15,13 @@ def send(message):
 
 start = read()
 scenario = sys.argv[1]
+if start["type"] == "balance":
+    if scenario == "balance-error":
+        send({"type": "error", "message": "Balance unavailable"})
+    else:
+        send({"type": "balance", "balance_infos": [{"currency": "USD", "total_balance": "4.82"}]})
+    time.sleep(1)
+    sys.exit(0)
 task = start["task"]
 revision = start["revision"]
 send({"type": "usage", "total_tokens": 10 if scenario == "budget" else 1})
@@ -27,7 +34,27 @@ def proposal(rev, done=True):
     return edit
 
 
-if scenario == "late":
+if scenario == "create-file":
+    assert task["mode"] == "build", task
+    assert "print('hello')" in task["context"], task
+    assert task["create_file_directory"], task
+    send({"type": "edit", "revision": revision, "result": [], "done": True,
+          "create_file": {"name": "hello.py", "lines": ["print('hello')"]}})
+elif scenario == "unreported":
+    send({"type": "progress", "stage": "request"})
+    time.sleep(1)
+elif scenario == "suggestion":
+    edit = proposal(revision)
+    edit["suggestions"] = ["Check character continuity"]
+    send(edit)
+elif scenario == "question":
+    answered = any("Children" in line for line in task["result"])
+    edit = proposal(revision, answered)
+    if not answered:
+        edit["result"] = ["Which audience?"]
+        edit["blocked"] = True
+    send(edit)
+elif scenario == "late":
     signal.signal(signal.SIGTERM, signal.SIG_IGN)
     time.sleep(0.2)
     send(proposal(revision))
